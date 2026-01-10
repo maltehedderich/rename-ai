@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/google/generative-ai-go/genai"
-	"github.com/maltehedderich/rename-ai/internal/ports"
 	"google.golang.org/api/option"
 )
 
@@ -16,10 +15,10 @@ type GeminiProvider struct {
 	model  *genai.GenerativeModel
 }
 
-func NewGeminiProvider(ctx context.Context, apiKey string) (ports.AIProvider, error) {
+func NewGeminiProvider(ctx context.Context, apiKey string) (*GeminiProvider, error) {
 	client, err := genai.NewClient(ctx, option.WithAPIKey(apiKey))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create genai client: %w", err)
 	}
 
 	// Use flash model by default for speed/cost as per spec
@@ -62,7 +61,7 @@ func (p *GeminiProvider) GenerateName(ctx context.Context, content []byte, mimeT
 	}
 
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to generate content: %w", err)
 	}
 
 	if len(resp.Candidates) == 0 || resp.Candidates[0].Content == nil {

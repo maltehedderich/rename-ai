@@ -1,24 +1,31 @@
 package fs
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/gabriel-vasile/mimetype"
-	"github.com/maltehedderich/rename-ai/internal/ports"
 )
 
 type OsFileSystem struct{}
 
-func NewOsFileSystem() ports.FileSystem {
+func NewOsFileSystem() *OsFileSystem {
 	return &OsFileSystem{}
 }
 
 func (fs *OsFileSystem) ReadFile(path string) ([]byte, error) {
-	return os.ReadFile(path)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read file %s: %w", path, err)
+	}
+	return data, nil
 }
 
 func (fs *OsFileSystem) Rename(oldPath, newPath string) error {
-	return os.Rename(oldPath, newPath)
+	if err := os.Rename(oldPath, newPath); err != nil {
+		return fmt.Errorf("failed to rename %s to %s: %w", oldPath, newPath, err)
+	}
+	return nil
 }
 
 func (fs *OsFileSystem) Exists(path string) bool {
@@ -29,7 +36,7 @@ func (fs *OsFileSystem) Exists(path string) bool {
 func (fs *OsFileSystem) GetMimeType(path string) (string, error) {
 	mtype, err := mimetype.DetectFile(path)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to detect mimetype for %s: %w", path, err)
 	}
 	return mtype.String(), nil
 }
