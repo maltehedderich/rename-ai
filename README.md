@@ -50,3 +50,14 @@ $ rnai scan_001.pdf
 > Rename? [y/N]: y
 > Success! Renamed to q1-financial-report-2024.pdf
 ```
+
+## Development
+
+### Running Tests
+
+To run the test suite, use the standard Go test command:
+
+```bash
+go test -v ./...
+```
+

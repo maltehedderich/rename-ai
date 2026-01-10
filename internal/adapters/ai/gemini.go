@@ -76,10 +76,30 @@ func (p *GeminiProvider) GenerateName(ctx context.Context, content []byte, mimeT
 		}
 	}
 
-	// Parse JSON
+	// Parse JSON using the extracted helper
+	return parseAIResponse(respText)
+}
+
+// parseAIResponse is extracted to allow unit testing of the parsing logic
+func parseAIResponse(respText string) (string, error) {
 	var result aiResponse
-	if err := json.Unmarshal([]byte(respText), &result); err != nil {
+	// Clean up potential markdown code blocks if the AI wraps the JSON
+	cleaned := strings.TrimSpace(respText)
+	if strings.HasPrefix(cleaned, "```json") {
+		cleaned = strings.TrimPrefix(cleaned, "```json")
+		cleaned = strings.TrimSuffix(cleaned, "```")
+	} else if strings.HasPrefix(cleaned, "```") {
+		cleaned = strings.TrimPrefix(cleaned, "```")
+		cleaned = strings.TrimSuffix(cleaned, "```")
+	}
+	cleaned = strings.TrimSpace(cleaned)
+
+	if err := json.Unmarshal([]byte(cleaned), &result); err != nil {
 		return "", fmt.Errorf("failed to parse AI response: %w (response: %s)", err, respText)
+	}
+
+	if result.Filename == "" {
+		return "", fmt.Errorf("AI response contained empty filename")
 	}
 
 	return result.Filename, nil
