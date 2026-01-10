@@ -15,14 +15,13 @@ type GeminiProvider struct {
 	model  *genai.GenerativeModel
 }
 
-func NewGeminiProvider(ctx context.Context, apiKey string) (*GeminiProvider, error) {
+func NewGeminiProvider(ctx context.Context, apiKey string, modelName string) (*GeminiProvider, error) {
 	client, err := genai.NewClient(ctx, option.WithAPIKey(apiKey))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create genai client: %w", err)
 	}
 
-	// Use flash model by default for speed/cost as per spec
-	model := client.GenerativeModel("gemini-flash-latest")
+	model := client.GenerativeModel(modelName)
 	model.ResponseMIMEType = "application/json"
 
 	return &GeminiProvider{

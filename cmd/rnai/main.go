@@ -18,6 +18,7 @@ import (
 var (
 	dryRun bool
 	style  string
+	model  string
 )
 
 var rootCmd = &cobra.Command{
@@ -45,7 +46,15 @@ var rootCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		aiClient, err := ai.NewGeminiProvider(ctx, key)
+		// Get model from viper (flag or env)
+		modelName := viper.GetString("model")
+		if modelName == "" {
+			modelName = "gemini-flash-latest" // Default fallback if not set by flag or env (though flag default handles this)
+		}
+
+		fmt.Printf("> Using model: %s\n", modelName)
+
+		aiClient, err := ai.NewGeminiProvider(ctx, key, modelName)
 		if err != nil {
 			console.Error(fmt.Sprintf("Failed to initialize AI client: %v", err))
 			os.Exit(1)
@@ -123,8 +132,11 @@ func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "Simulate rename without executing")
 	rootCmd.PersistentFlags().StringVar(&style, "style", "kebab", "Naming style (kebab, snake)")
+	rootCmd.PersistentFlags().StringVar(&model, "model", "gemini-flash-latest", "Gemini model to use")
+	viper.BindPFlag("model", rootCmd.PersistentFlags().Lookup("model"))
 }
 
 func initConfig() {
 	viper.AutomaticEnv() // Read from env variables
+	viper.BindEnv("model", "GEMINI_MODEL")
 }
