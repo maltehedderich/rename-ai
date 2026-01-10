@@ -6,52 +6,54 @@ func TestParseAIResponse(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name    string
-		input   string
-		want    string
-		wantErr bool
+		name          string
+		input         string
+		wantFilename  string
+		wantReasoning string
+		wantErr       bool
 	}{
 		{
-			name:    "valid json",
-			input:   `{"filename": "test-file.txt", "reasoning": "it's a test"}`,
-			want:    "test-file.txt",
-			wantErr: false,
+			name:          "valid json",
+			input:         `{"filename": "test-file.txt", "reasoning": "it's a test"}`,
+			wantFilename:  "test-file.txt",
+			wantReasoning: "it's a test",
+			wantErr:       false,
 		},
 		{
-			name:    "json with markdown code block",
-			input:   "```json\n{\"filename\": \"test-file.txt\", \"reasoning\": \"it's a test\"}\n```",
-			want:    "test-file.txt",
-			wantErr: false,
+			name:          "json with markdown code block",
+			input:         "```json\n{\"filename\": \"test-file.txt\", \"reasoning\": \"it's a test\"}\n```",
+			wantFilename:  "test-file.txt",
+			wantReasoning: "it's a test",
+			wantErr:       false,
 		},
 		{
-			name:    "json with plain code block",
-			input:   "```\n{\"filename\": \"test-file.txt\", \"reasoning\": \"it's a test\"}\n```",
-			want:    "test-file.txt",
-			wantErr: false,
+			name:          "json with plain code block",
+			input:         "```\n{\"filename\": \"test-file.txt\", \"reasoning\": \"it's a test\"}\n```",
+			wantFilename:  "test-file.txt",
+			wantReasoning: "it's a test",
+			wantErr:       false,
 		},
 		{
 			name:    "invalid json",
 			input:   `{invalid json}`,
-			want:    "",
 			wantErr: true,
 		},
 		{
 			name:    "empty filename",
 			input:   `{"filename": "", "reasoning": "fail"}`,
-			want:    "",
 			wantErr: true,
 		},
 		{
 			name:    "missing filename field",
 			input:   `{"reasoning": "fail"}`,
-			want:    "",
 			wantErr: true,
 		},
 		{
-			name:    "extra fields",
-			input:   `{"filename": "extra.txt", "reasoning": "ok", "other": "ignored"}`,
-			want:    "extra.txt",
-			wantErr: false,
+			name:          "extra fields",
+			input:         `{"filename": "extra.txt", "reasoning": "ok", "other": "ignored"}`,
+			wantFilename:  "extra.txt",
+			wantReasoning: "ok",
+			wantErr:       false,
 		},
 	}
 
@@ -59,13 +61,16 @@ func TestParseAIResponse(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			got, err := parseAIResponse(tc.input)
+			gotFilename, gotReasoning, err := parseAIResponse(tc.input)
 			if (err != nil) != tc.wantErr {
 				t.Errorf("parseAIResponse() error = %v, wantErr %v", err, tc.wantErr)
 				return
 			}
-			if got != tc.want {
-				t.Errorf("parseAIResponse() = %v, want %v", got, tc.want)
+			if gotFilename != tc.wantFilename {
+				t.Errorf("parseAIResponse() filename = %v, want %v", gotFilename, tc.wantFilename)
+			}
+			if gotReasoning != tc.wantReasoning {
+				t.Errorf("parseAIResponse() reasoning = %v, want %v", gotReasoning, tc.wantReasoning)
 			}
 		})
 	}

@@ -34,7 +34,7 @@ type aiResponse struct {
 	Reasoning string `json:"reasoning"`
 }
 
-func (p *GeminiProvider) GenerateName(ctx context.Context, content []byte, mimeType string, currentExt string) (string, error) {
+func (p *GeminiProvider) GenerateName(ctx context.Context, content []byte, mimeType string, currentExt string) (string, string, error) {
 	prompt := fmt.Sprintf(`You are an intelligent file renaming assistant.
 		Specific rules:
 		1. Analyze the attached content.
@@ -90,14 +90,14 @@ func (p *GeminiProvider) GenerateName(ctx context.Context, content []byte, mimeT
 		config,
 	)
 	if err != nil {
-		return "", fmt.Errorf("failed to generate content: %w", err)
+		return "", "", fmt.Errorf("failed to generate content: %w", err)
 	}
 
 	return parseAIResponse(resp.Text())
 }
 
 // parseAIResponse handles the unmarshalling of the JSON response
-func parseAIResponse(respText string) (string, error) {
+func parseAIResponse(respText string) (string, string, error) {
 	var result aiResponse
 	// Clean up potential markdown code blocks if the AI wraps the JSON (SDK might not, but safe to keep)
 	cleaned := strings.TrimSpace(respText)
@@ -111,12 +111,12 @@ func parseAIResponse(respText string) (string, error) {
 	cleaned = strings.TrimSpace(cleaned)
 
 	if err := json.Unmarshal([]byte(cleaned), &result); err != nil {
-		return "", fmt.Errorf("failed to parse AI response: %w (response: %s)", err, respText)
+		return "", "", fmt.Errorf("failed to parse AI response: %w (response: %s)", err, respText)
 	}
 
 	if result.Filename == "" {
-		return "", fmt.Errorf("AI response contained empty filename")
+		return "", "", fmt.Errorf("AI response contained empty filename")
 	}
 
-	return result.Filename, nil
+	return result.Filename, result.Reasoning, nil
 }
