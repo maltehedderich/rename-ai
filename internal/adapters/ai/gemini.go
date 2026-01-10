@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"google.golang.org/genai"
 )
@@ -35,13 +36,21 @@ type aiResponse struct {
 }
 
 func (p *GeminiProvider) GenerateName(ctx context.Context, content []byte, mimeType string, currentExt string) (string, string, error) {
+	currentDate := time.Now().Format("2006-01-02")
 	prompt := fmt.Sprintf(`You are an intelligent file renaming assistant.
+		Context:
+		- Current Date: %s
+
 		Specific rules:
 		1. Analyze the attached content.
-		2. Summarize the content to identify its core subject.
-		3. Generate a concise, descriptive filename based on that summary.
-		4. Use kebab-case.
-		5. Ensure the filename ends with the extension "%s".`, currentExt)
+		2. Summarize the content to identify its core subject and any relevant date.
+		3. Generate a filename adhering to the following structure: YYYY-MM-DD_Subject-Title%s
+		   - Always start with a date in ISO 8601 format (YYYY-MM-DD). If no specific date is found in the content, use the Current Date provided above as a fallback.
+		   - Use underscores (_) to separate the date from the subject/title.
+		   - Use hyphens (-) to separate words within the subject/title.
+		   - Alternatively, use CamelCase for the subject (e.g., BudgetReport) if appropriate.
+		   - Ensure the filename ends with the extension "%s".
+		4. Example: 2023-12-01_Budget-Report%s`, currentDate, currentExt, currentExt, currentExt)
 
 	// Define the schema for structured output
 	schema := map[string]any{
@@ -49,7 +58,7 @@ func (p *GeminiProvider) GenerateName(ctx context.Context, content []byte, mimeT
 		"properties": map[string]any{
 			"filename": map[string]any{
 				"type":        "string",
-				"description": "The generated filename, using kebab-case and the correct extension.",
+				"description": "The generated filename, starting with YYYY-MM-DD, followed by an underscore and the subject/title, and ending with the correct extension.",
 			},
 			"reasoning": map[string]any{
 				"type":        "string",
