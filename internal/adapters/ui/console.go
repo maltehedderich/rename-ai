@@ -8,6 +8,19 @@ import (
 	"strings"
 )
 
+// ANSI Color codes
+const (
+	Reset  = "\033[0m"
+	Red    = "\033[31m"
+	Green  = "\033[32m"
+	Yellow = "\033[33m"
+	Blue   = "\033[34m"
+	Purple = "\033[35m"
+	Cyan   = "\033[36m"
+	Gray   = "\033[37m"
+	Bold   = "\033[1m"
+)
+
 type ConsoleUI struct {
 	reader io.Reader
 	writer io.Writer
@@ -28,14 +41,42 @@ func NewConsoleUIWithStreams(r io.Reader, w io.Writer) *ConsoleUI {
 	}
 }
 
+func (ui *ConsoleUI) Info(msg string) {
+	fmt.Fprintf(ui.writer, "%s> %s%s\n", Blue, msg, Reset)
+}
+
+func (ui *ConsoleUI) PrintModelInfo(model string) {
+	fmt.Fprintf(ui.writer, "%s> Using model: %s%s%s\n", Gray, Cyan, model, Reset)
+}
+
+func (ui *ConsoleUI) PrintDetectedType(mimeType string) {
+	fmt.Fprintf(ui.writer, "%s> Detected type: %s%s%s\n", Gray, Cyan, mimeType, Reset)
+}
+
+func (ui *ConsoleUI) PrintAnalyzing(filename string) {
+	fmt.Fprintf(ui.writer, "%s> Analyzing '%s%s%s' with Gemini...%s\n", Gray, Bold, filename, Gray, Reset)
+}
+
 func (ui *ConsoleUI) PrintProposal(oldName, newName, reasoning string) {
-	fmt.Fprintf(ui.writer, "\nProposal:\n")
-	fmt.Fprintf(ui.writer, "  Reasoning: %s\n", reasoning)
-	fmt.Fprintf(ui.writer, "  Rename: %s -> %s\n", oldName, newName)
+	fmt.Fprintf(ui.writer, "\n%s%s Proposal %s\n", Purple, Bold, Reset)
+	fmt.Fprintf(ui.writer, "%sReasoning:%s\n  %s\n\n", Bold, Reset, reasoning)
+	fmt.Fprintf(ui.writer, "%sRename:%s\n  %s%s%s -> %s%s%s\n\n", Bold, Reset, Red, oldName, Reset, Green, newName, Reset)
+}
+
+func (ui *ConsoleUI) PrintSuccess(newName string) {
+	fmt.Fprintf(ui.writer, "%s> Success! Renamed to %s%s%s\n", Green, Bold, newName, Reset)
+}
+
+func (ui *ConsoleUI) PrintDryRun() {
+	fmt.Fprintf(ui.writer, "%s> Dry-run enabled. Skipping rename.%s\n", Yellow, Reset)
+}
+
+func (ui *ConsoleUI) PrintCancelled() {
+	fmt.Fprintf(ui.writer, "%s> Cancelled.%s\n", Red, Reset)
 }
 
 func (ui *ConsoleUI) Confirm(question string) (bool, error) {
-	fmt.Fprintf(ui.writer, "%s [y/N]: ", question)
+	fmt.Fprintf(ui.writer, "%s%s [y/N]: %s", Bold, question, Reset)
 	reader := bufio.NewReader(ui.reader)
 	response, err := reader.ReadString('\n')
 	if err != nil {
@@ -46,5 +87,5 @@ func (ui *ConsoleUI) Confirm(question string) (bool, error) {
 }
 
 func (ui *ConsoleUI) Error(msg string) {
-	fmt.Fprintf(ui.writer, "Error: %s\n", msg)
+	fmt.Fprintf(ui.writer, "%sError: %s%s\n", Red, msg, Reset)
 }

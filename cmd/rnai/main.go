@@ -52,7 +52,7 @@ var rootCmd = &cobra.Command{
 			modelName = "gemini-flash-latest" // Default fallback if not set by flag or env (though flag default handles this)
 		}
 
-		fmt.Printf("> Using model: %s\n", modelName)
+		console.PrintModelInfo(modelName)
 
 		aiClient, err := ai.NewGeminiProvider(ctx, key, modelName)
 		if err != nil {
@@ -67,14 +67,14 @@ var rootCmd = &cobra.Command{
 			console.Error(fmt.Sprintf("Failed to detect mime type: %v", err))
 			os.Exit(1)
 		}
-		fmt.Printf("> Detected type: %s\n", mimeType)
+		console.PrintDetectedType(mimeType)
 
 		if err := domain.IsAllowedMimeType(mimeType); err != nil {
 			console.Error(fmt.Sprintf("Validation failed: %v", err))
 			os.Exit(1)
 		}
 
-		fmt.Printf("> Analyzing '%s' with Gemini...\n", filepath.Base(filePath))
+		console.PrintAnalyzing(filepath.Base(filePath))
 		content, err := fileSys.ReadFile(filePath)
 		if err != nil {
 			console.Error(fmt.Sprintf("Failed to read file: %v", err))
@@ -103,7 +103,7 @@ var rootCmd = &cobra.Command{
 		console.PrintProposal(filepath.Base(filePath), finalName, reasoning)
 
 		if dryRun {
-			fmt.Println("> Dry-run enabled. Skipping rename.")
+			console.PrintDryRun()
 			return
 		}
 
@@ -119,9 +119,9 @@ var rootCmd = &cobra.Command{
 				console.Error(fmt.Sprintf("Rename failed: %v", err))
 				os.Exit(1)
 			}
-			fmt.Printf("> Success! Renamed to %s\n", finalName)
+			console.PrintSuccess(finalName)
 		} else {
-			fmt.Println("> Cancelled.")
+			console.PrintCancelled()
 		}
 	},
 }
