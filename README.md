@@ -21,9 +21,11 @@ go install github.com/maltehedderich/rename-ai/cmd/rnai@latest
 
 ## Usage
 
-1.  **Set your API Key**:
+1.  **Configure Environment**:
     ```bash
     export GEMINI_API_KEY="your-api-key-here"
+    # Optional: Set a specific model (default: gemini-flash-latest)
+    export GEMINI_MODEL="gemini-3-pro-preview"
     ```
 
 2.  **Run the tool**:
@@ -33,6 +35,10 @@ go install github.com/maltehedderich/rename-ai/cmd/rnai@latest
 
 ### Flags
 
+-   `--model`: Specify the Gemini model to use (overrides `GEMINI_MODEL`).
+    ```bash
+    rnai document.pdf --model gemini-3-pro-preview
+    ```
 -   `--dry-run`: Simulate the rename operation without making changes.
     ```bash
     rnai document.pdf --dry-run
