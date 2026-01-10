@@ -6,27 +6,26 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/google/generative-ai-go/genai"
-	"google.golang.org/api/option"
+	"google.golang.org/genai"
 )
 
 type GeminiProvider struct {
 	client *genai.Client
-	model  *genai.GenerativeModel
+	model  string
 }
 
 func NewGeminiProvider(ctx context.Context, apiKey string, modelName string) (*GeminiProvider, error) {
-	client, err := genai.NewClient(ctx, option.WithAPIKey(apiKey))
+	client, err := genai.NewClient(ctx, &genai.ClientConfig{
+		APIKey: apiKey,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create genai client: %w", err)
 	}
 
-	model := client.GenerativeModel(modelName)
-	model.ResponseMIMEType = "application/json"
-
+	// Use a capable model (no changes to model name passing, but verify default)
 	return &GeminiProvider{
 		client: client,
-		model:  model,
+		model:  modelName,
 	}, nil
 }
 
@@ -42,47 +41,65 @@ func (p *GeminiProvider) GenerateName(ctx context.Context, content []byte, mimeT
 		2. Summarize the content to identify its core subject.
 		3. Generate a concise, descriptive filename based on that summary.
 		4. Use kebab-case.
-		5. Ensure the filename ends with the extension "%s".
-		6. Return JSON: {"filename": "...", "reasoning": "..."}.`, currentExt)
+		5. Ensure the filename ends with the extension "%s".`, currentExt)
 
-	var resp *genai.GenerateContentResponse
-	var err error
-
-	if strings.HasPrefix(mimeType, "text/") || mimeType == "application/json" || strings.Contains(mimeType, "xml") {
-		// Treat as text
-		resp, err = p.model.GenerateContent(ctx, genai.Text(prompt), genai.Text(string(content)))
-	} else {
-		// Treat as blob (e.g. PDF, Image)
-		resp, err = p.model.GenerateContent(ctx, genai.Text(prompt), genai.Blob{
-			MIMEType: mimeType,
-			Data:     content,
-		})
+	// Define the schema for structured output
+	schema := map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"filename": map[string]any{
+				"type":        "string",
+				"description": "The generated filename, using kebab-case and the correct extension.",
+			},
+			"reasoning": map[string]any{
+				"type":        "string",
+				"description": "Brief explanation of why this name was chosen.",
+			},
+		},
+		"required": []string{"filename", "reasoning"},
 	}
 
+	config := &genai.GenerateContentConfig{
+		ResponseMIMEType:   "application/json",
+		ResponseJsonSchema: schema,
+		SystemInstruction:  &genai.Content{Parts: []*genai.Part{{Text: prompt}}},
+	}
+
+	var part *genai.Part
+	if strings.HasPrefix(mimeType, "text/") || mimeType == "application/json" || strings.Contains(mimeType, "xml") {
+		part = &genai.Part{Text: string(content)}
+	} else {
+		part = &genai.Part{InlineData: &genai.Blob{
+			MIMEType: mimeType,
+			Data:     content,
+		}}
+	}
+
+	// Construct the content with the part
+	userContent := &genai.Content{
+		Parts: []*genai.Part{
+			{Text: "Analyze the following file content and generate a filename."},
+			part,
+		},
+	}
+
+	resp, err := p.client.Models.GenerateContent(
+		ctx,
+		p.model,
+		[]*genai.Content{userContent},
+		config,
+	)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate content: %w", err)
 	}
 
-	if len(resp.Candidates) == 0 || resp.Candidates[0].Content == nil {
-		return "", fmt.Errorf("no candidates returned from AI")
-	}
-
-	// Extract text from part
-	var respText string
-	for _, part := range resp.Candidates[0].Content.Parts {
-		if txt, ok := part.(genai.Text); ok {
-			respText += string(txt)
-		}
-	}
-
-	// Parse JSON using the extracted helper
-	return parseAIResponse(respText)
+	return parseAIResponse(resp.Text())
 }
 
-// parseAIResponse is extracted to allow unit testing of the parsing logic
+// parseAIResponse handles the unmarshalling of the JSON response
 func parseAIResponse(respText string) (string, error) {
 	var result aiResponse
-	// Clean up potential markdown code blocks if the AI wraps the JSON
+	// Clean up potential markdown code blocks if the AI wraps the JSON (SDK might not, but safe to keep)
 	cleaned := strings.TrimSpace(respText)
 	if strings.HasPrefix(cleaned, "```json") {
 		cleaned = strings.TrimPrefix(cleaned, "```json")
