@@ -61,7 +61,7 @@ var rootCmd = &cobra.Command{
 		}
 
 		// 2. Execution Flow
-		fmt.Println("> Detected type: checking...")
+
 		mimeType, err := fileSys.GetMimeType(filePath)
 		if err != nil {
 			console.Error(fmt.Sprintf("Failed to detect mime type: %v", err))
