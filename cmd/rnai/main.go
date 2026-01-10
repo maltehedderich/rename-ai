@@ -69,6 +69,11 @@ var rootCmd = &cobra.Command{
 		}
 		fmt.Printf("> Detected type: %s\n", mimeType)
 
+		if err := domain.IsAllowedMimeType(mimeType); err != nil {
+			console.Error(fmt.Sprintf("Validation failed: %v", err))
+			os.Exit(1)
+		}
+
 		fmt.Printf("> Analyzing '%s' with Gemini...\n", filepath.Base(filePath))
 		content, err := fileSys.ReadFile(filePath)
 		if err != nil {
