@@ -82,8 +82,8 @@ func (ui *ConsoleUI) Confirm(question string) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("failed to read user input: %w", err)
 	}
-	response = strings.TrimSpace(response)
-	return strings.ToLower(response) == "y", nil
+	response = strings.ToLower(strings.TrimSpace(response))
+	return response == "y" || response == "yes", nil
 }
 
 func (ui *ConsoleUI) Error(msg string) {

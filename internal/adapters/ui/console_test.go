@@ -29,7 +29,14 @@ func TestConsoleUI_Confirm(t *testing.T) {
 			name:     "YES",
 			input:    "YES\n",
 			question: "Proceed?",
-			want:     false, // Only simple 'y' check in code: strings.ToLower(response) == "y"
+			want:     true,
+			wantErr:  false,
+		},
+		{
+			name:     "yes_full",
+			input:    "yes\n",
+			question: "Proceed?",
+			want:     true,
 			wantErr:  false,
 		},
 		{
