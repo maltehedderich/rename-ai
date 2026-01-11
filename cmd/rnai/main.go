@@ -138,10 +138,10 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "Simulate rename without executing")
 	rootCmd.PersistentFlags().StringVar(&style, "style", "kebab", "Naming style (kebab, snake)")
 	rootCmd.PersistentFlags().StringVar(&model, "model", "gemini-flash-latest", "Gemini model to use")
-	viper.BindPFlag("model", rootCmd.PersistentFlags().Lookup("model"))
+	_ = viper.BindPFlag("model", rootCmd.PersistentFlags().Lookup("model"))
 }
 
 func initConfig() {
 	viper.AutomaticEnv() // Read from env variables
-	viper.BindEnv("model", "GEMINI_MODEL")
+	_ = viper.BindEnv("model", "GEMINI_MODEL")
 }
