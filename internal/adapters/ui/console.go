@@ -58,7 +58,7 @@ func (ui *ConsoleUI) PrintAnalyzing(filename string) {
 }
 
 func (ui *ConsoleUI) PrintProposal(oldName, newName, reasoning string) {
-	fmt.Fprintf(ui.writer, "\n%s%s Proposal %s\n", Purple, Bold, Reset)
+	fmt.Fprintf(ui.writer, "\n%s%sProposal %s\n", Purple, Bold, Reset)
 	fmt.Fprintf(ui.writer, "%sReasoning:%s\n  %s\n\n", Bold, Reset, reasoning)
 	fmt.Fprintf(ui.writer, "%sRename:%s\n  %s%s%s -> %s%s%s\n\n", Bold, Reset, Red, oldName, Reset, Green, newName, Reset)
 }

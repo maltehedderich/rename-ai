@@ -49,12 +49,19 @@ go install github.com/maltehedderich/rename-ai/cmd/rnai@latest
 ```bash
 $ rnai scan_001.pdf
 
+> Using model: gemini-flash-latest
 > Detected type: application/pdf
 > Analyzing 'scan_001.pdf' with Gemini...
-> Proposed Name: q1-financial-report-2024.pdf
-> Reasoning: The document summarizes the Q1 financial results for the fiscal year 2024.
-> Rename? [y/N]: y
-> Success! Renamed to q1-financial-report-2024.pdf
+
+Proposal
+Reasoning:
+  The document summarizes the Q1 financial results for the fiscal year 2024.
+
+Rename:
+  scan_001.pdf -> 2024-03-24_q1-financial-report-2024.pdf
+
+Rename? [y/N]: y
+> Success! Renamed to 2024-03-24_q1-financial-report-2024.pdf
 ```
 
 ## Development
