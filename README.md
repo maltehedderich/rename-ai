@@ -15,6 +15,11 @@
 
 ## Installation
 
+### Option 1: Binary (Recommended)
+Download the pre-compiled binary for your system from the [Releases](https://github.com/maltehedderich/rename-ai/releases) page.
+
+### Option 2: Go Install
+If you have Go installed:
 ```bash
 go install github.com/maltehedderich/rename-ai/cmd/rnai@latest
 ```
