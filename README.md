@@ -8,35 +8,39 @@
 - **Safety First**: Includes a `--dry-run` mode to preview changes.
 - **Collision Handling**: Automatically handles duplicate filenames by incrementing a counter.
 
-## Prerequisites
-
-- Go 1.25+
-- Google Gemini API Key
-
 ## Installation
 
 ### Option 1: Binary (Recommended)
 Download the pre-compiled binary for your system from the [Releases](https://github.com/maltehedderich/rename-ai/releases) page.
+*No additional dependencies required.*
 
 ### Option 2: Go Install
-If you have Go installed:
+If you are a Go developer or prefer installing via `go`:
 ```bash
 go install github.com/maltehedderich/rename-ai/cmd/rnai@latest
 ```
 
+## Configuration
+
+Before running the tool, you must configure your Gemini API key.
+
+```bash
+export GEMINI_API_KEY="your-api-key-here"
+```
+
+Optional configuration:
+```bash
+# Set a specific model (default: gemini-flash-latest)
+export GEMINI_MODEL="gemini-3-pro-preview"
+```
+
 ## Usage
 
-1.  **Configure Environment**:
-    ```bash
-    export GEMINI_API_KEY="your-api-key-here"
-    # Optional: Set a specific model (default: gemini-flash-latest)
-    export GEMINI_MODEL="gemini-3-pro-preview"
-    ```
+Run the tool on any supported file:
 
-2.  **Run the tool**:
-    ```bash
-    rnai path/to/file.pdf
-    ```
+```bash
+rnai path/to/file.pdf
+```
 
 ### Flags
 
@@ -69,11 +73,18 @@ Rename? [y/N]: y
 > Success! Renamed to 2024-03-24_q1-financial-report-2024.pdf
 ```
 
+---
+
 ## Development
+
+If you want to contribute to `rnai`, you will need:
+
+- **Go 1.25+**
+- **Google Gemini API Key** for running integration tests (if any).
 
 ### Running Tests
 
-To run the test suite, use the standard Go test command:
+To run the test suite:
 
 ```bash
 go test -v ./...
