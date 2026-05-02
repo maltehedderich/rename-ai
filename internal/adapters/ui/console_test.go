@@ -2,6 +2,8 @@ package ui_test
 
 import (
 	"bytes"
+	"errors"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -99,6 +101,109 @@ func TestConsoleUI_PrintProposal(t *testing.T) {
 	}
 	if !strings.Contains(output, "because") {
 		t.Error("output missing reasoning")
+	}
+}
+
+func TestConsoleUI_SelectFiles(t *testing.T) {
+	t.Parallel()
+
+	files := []string{"a.txt", "b.txt", "c.txt"}
+	tests := []struct {
+		name       string
+		input      string
+		want       []string
+		wantErr    error
+		wantOutput string
+	}{
+		{
+			name:  "select all",
+			input: "a\n\n",
+			want:  []string{"a.txt", "b.txt", "c.txt"},
+		},
+		{
+			name:  "select none after all",
+			input: "a\nn\n3\n\n",
+			want:  []string{"c.txt"},
+		},
+		{
+			name:  "comma list",
+			input: "1,3\n\n",
+			want:  []string{"a.txt", "c.txt"},
+		},
+		{
+			name:  "range",
+			input: "1-2\n\n",
+			want:  []string{"a.txt", "b.txt"},
+		},
+		{
+			name:       "empty selection asks again",
+			input:      "\n2\n\n",
+			want:       []string{"b.txt"},
+			wantOutput: "Select at least one file",
+		},
+		{
+			name:       "invalid selection asks again",
+			input:      "4\n2\n\n",
+			want:       []string{"b.txt"},
+			wantOutput: "Invalid selection",
+		},
+		{
+			name:    "cancel",
+			input:   "q\n",
+			wantErr: ui.ErrSelectionCancelled,
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			in := strings.NewReader(tc.input)
+			out := &bytes.Buffer{}
+			c := ui.NewConsoleUIWithStreams(in, out)
+
+			got, err := c.SelectFiles(files)
+			if tc.wantErr != nil {
+				if !errors.Is(err, tc.wantErr) {
+					t.Fatalf("SelectFiles() error = %v; want %v", err, tc.wantErr)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("SelectFiles() error = %v", err)
+			}
+			if !reflect.DeepEqual(got, tc.want) {
+				t.Fatalf("SelectFiles() = %#v; want %#v", got, tc.want)
+			}
+			if tc.wantOutput != "" && !strings.Contains(out.String(), tc.wantOutput) {
+				t.Fatalf("output missing %q: %q", tc.wantOutput, out.String())
+			}
+		})
+	}
+}
+
+func TestConsoleUI_SharedInputBuffer(t *testing.T) {
+	t.Parallel()
+
+	in := strings.NewReader("1\n\ny\n")
+	out := &bytes.Buffer{}
+	c := ui.NewConsoleUIWithStreams(in, out)
+
+	selected, err := c.SelectFiles([]string{"a.txt"})
+	if err != nil {
+		t.Fatalf("SelectFiles() error = %v", err)
+	}
+	if !reflect.DeepEqual(selected, []string{"a.txt"}) {
+		t.Fatalf("SelectFiles() = %#v; want a.txt", selected)
+	}
+
+	confirmed, err := c.Confirm("Rename?")
+	if err != nil {
+		t.Fatalf("Confirm() error = %v", err)
+	}
+	if !confirmed {
+		t.Fatal("Confirm() = false; want true")
 	}
 }
 

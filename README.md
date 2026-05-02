@@ -36,10 +36,24 @@ export GEMINI_MODEL="gemini-3-pro-preview"
 
 ## Usage
 
-Run the tool on any supported file:
+Run the tool in a folder to choose files interactively:
+
+```bash
+rnai
+```
+
+The picker shows visible regular files in the current folder. Use `a` to select all, `n` to clear the selection, numbers such as `1` or `1,3`, ranges such as `1-4`, Enter to continue, and `q` to cancel.
+
+Run the tool on one supported file:
 
 ```bash
 rnai path/to/file.pdf
+```
+
+Run the tool on multiple explicit files:
+
+```bash
+rnai invoice.pdf notes.md screenshot.png
 ```
 
 ### Flags
@@ -51,6 +65,7 @@ rnai path/to/file.pdf
 -   `--dry-run`: Simulate the rename operation without making changes.
     ```bash
     rnai document.pdf --dry-run
+    rnai invoice.pdf notes.md --dry-run
     ```
 
 ## Example
@@ -89,4 +104,3 @@ To run the test suite:
 ```bash
 go test -v ./...
 ```
-

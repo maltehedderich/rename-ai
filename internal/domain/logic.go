@@ -20,6 +20,17 @@ type RenameResult struct {
 	Reasoning    string
 }
 
+type RenameCandidate struct {
+	OriginalPath string
+	ProposedName string
+}
+
+type ResolvedRename struct {
+	OriginalPath string
+	FinalName    string
+	NoOp         bool
+}
+
 // SanitizeFilename removes invalid characters and enforces kebab-case
 func SanitizeFilename(name string) string {
 	// Remove invalid characters for filenames (this is a simplified regex)
@@ -49,4 +60,57 @@ func ResolveCollision(baseName string, checkExists func(string) bool) string {
 		}
 		counter++
 	}
+}
+
+func ResolveBatchCollisions(candidates []RenameCandidate, checkExists func(string) bool) []ResolvedRename {
+	results := make([]ResolvedRename, 0, len(candidates))
+	reservedTargets := make(map[string]map[string]struct{})
+	selectedSources := make(map[string]map[string]struct{})
+
+	for _, candidate := range candidates {
+		dir := filepath.Dir(candidate.OriginalPath)
+		name := filepath.Base(candidate.OriginalPath)
+		if selectedSources[dir] == nil {
+			selectedSources[dir] = make(map[string]struct{})
+		}
+		selectedSources[dir][name] = struct{}{}
+	}
+
+	for _, candidate := range candidates {
+		dir := filepath.Dir(candidate.OriginalPath)
+		originalName := filepath.Base(candidate.OriginalPath)
+		proposedName := filepath.Base(candidate.ProposedName)
+
+		result := ResolvedRename{
+			OriginalPath: candidate.OriginalPath,
+			FinalName:    proposedName,
+		}
+
+		if proposedName == originalName {
+			result.NoOp = true
+			results = append(results, result)
+			continue
+		}
+
+		finalName := ResolveCollision(proposedName, func(name string) bool {
+			if reservedTargets[dir] != nil {
+				if _, ok := reservedTargets[dir][name]; ok {
+					return true
+				}
+			}
+			if _, ok := selectedSources[dir][name]; ok {
+				return true
+			}
+			return checkExists(filepath.Join(dir, name))
+		})
+
+		if reservedTargets[dir] == nil {
+			reservedTargets[dir] = make(map[string]struct{})
+		}
+		reservedTargets[dir][finalName] = struct{}{}
+		result.FinalName = finalName
+		results = append(results, result)
+	}
+
+	return results
 }

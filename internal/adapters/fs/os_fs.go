@@ -3,6 +3,9 @@ package fs
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"sort"
+	"strings"
 
 	"github.com/gabriel-vasile/mimetype"
 )
@@ -39,4 +42,23 @@ func (fs *OsFileSystem) GetMimeType(path string) (string, error) {
 		return "", fmt.Errorf("failed to detect mimetype for %s: %w", path, err)
 	}
 	return mtype.String(), nil
+}
+
+func (fs *OsFileSystem) ListVisibleFiles(dir string) ([]string, error) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list files in %s: %w", dir, err)
+	}
+
+	files := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		name := entry.Name()
+		if strings.HasPrefix(name, ".") || !entry.Type().IsRegular() {
+			continue
+		}
+		files = append(files, filepath.Join(dir, name))
+	}
+
+	sort.Strings(files)
+	return files, nil
 }
