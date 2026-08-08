@@ -1,44 +1,23 @@
-# Repository Guidelines
+### YAGNI — You Aren't Gonna Need It
 
-## Project Structure & Module Organization
+Add complexity only when there is a concrete, immediate need. Specifically:
 
-This is a Go CLI module for `rnai`, a Gemini-powered file renamer.
+- **No speculative abstractions**: Don't extract a helper, base class, or utility unless two or more places use it today. Three similar lines of code beat a premature abstraction.
+- **No one-line helper wrappers**: Don't add a helper that wraps a single expression or call. Inline it unless it removes real duplication or names repeated domain behavior.
+- **No future-proofing**: Don't add config flags, extension points, or generic interfaces for requirements nobody has yet.
+- **No defensive over-engineering**: Don't handle errors, add fallbacks, or validate against edge cases that can't happen in the current codebase. Trust internal contracts.
+- **No unused flexibility**: Don't make things configurable or overridable until a second consumer exists.
+- **Scope-bound changes**: A bug fix changes only the broken behavior. A feature adds only what was asked for. No opportunistic refactors, no drive-by cleanup.
 
-- `cmd/rnai/main.go` contains the Cobra CLI entry point, flags, environment binding, and top-level execution flow.
-- `internal/domain/` contains pure filename, validation, and collision logic.
-- `internal/adapters/` contains external boundary code: `ai/` for Gemini, `fs/` for filesystem access, and `ui/` for console interaction.
-- `docs/` holds design notes, and `RELEASING.md` documents the GoReleaser tag-based release process.
-- Tests live next to implementation files as `*_test.go`.
+### Balanced Testing
 
-## Build, Test, and Development Commands
+Testing effort follows risk, not test count or coverage percentage:
 
-- `go test -v ./...` runs the full test suite.
-- `go test -v -race ./...` runs tests with the race detector, matching CI.
-- `go vet ./...` runs Go static analysis used by CI.
-- `go build -v ./...` verifies all packages build.
-- `go mod verify` checks downloaded module integrity.
-- `go run ./cmd/rnai path/to/file.pdf --dry-run` runs the CLI locally. Set `GEMINI_API_KEY` first; optionally set `GEMINI_MODEL`.
-
-CI also runs `golangci-lint` through GitHub Actions. Run `golangci-lint run ./...` locally if you have it installed.
-
-## Coding Style & Naming Conventions
-
-Use idiomatic Go. Format all Go files with `gofmt`; use `goimports` behavior for import grouping: standard library, third-party, then internal packages.
-
-Use `MixedCaps` for exported names and `mixedCaps` for unexported names. Keep small-scope variables short, but use descriptive names for wider scopes. Wrap propagated errors with context using `fmt.Errorf("...: %w", err)`, and prefer guard clauses over deep nesting.
-
-## Testing Guidelines
-
-Write focused unit tests beside the package they cover, named `TestXxx` in `*_test.go` files. Prefer table-driven tests for domain logic and adapter behavior. Use `t.Parallel()` when tests do not share mutable state, files, environment variables, or console input.
-
-Keep AI-dependent behavior isolated behind adapters so tests can exercise domain and UI logic without requiring live Gemini calls.
-
-## Commit & Pull Request Guidelines
-
-Recent history uses conventional prefixes such as `feat:`, `fix:`, `docs:`, and `chore:`. Keep commits small and imperative, for example `fix: handle uppercase confirmations`.
-
-Pull requests should include a concise summary, linked issue when relevant, test results (`go test -v -race ./...`, `go vet ./...`), and screenshots or terminal output for visible CLI behavior changes.
-
-## Security & Configuration Tips
-
-Never commit API keys or generated credentials. Configure local runs with `GEMINI_API_KEY` and optional `GEMINI_MODEL` environment variables. Prefer `--dry-run` when testing rename behavior on real files.
+- Rank failures by how likely they are and how much they hurt. Concentrate on payments, auth, tenant isolation, data integrity, irreversible actions, retries, and public contracts.
+- Automate the regression paths that are stable and worth protecting. Cosmetic, trivial, or stable glue changes can rely on existing checks and review.
+- Put each check at the lowest, fastest layer that can catch the failure. Reserve end-to-end and UI tests for critical user journeys, and delete the high-level checks that duplicate lower ones.
+- Assert observable behavior and public contracts, not private implementation. Mock internals sparingly: a refactor that preserves behavior should leave the tests passing.
+- Explore new, complex, or risky behavior by hand in a time-boxed session. Automate a finding only if it repeats and is worth protecting.
+- Treat coverage as a diagnostic for risky gaps, never as a delivery target.
+- Keep tests fast, isolated, and deterministic. Fix a flaky test, delete it, or quarantine it with a named owner and a condition for removal. Never paper over one with blanket retries.
+- Write the test before the code (TDD) when the logic is complex or the behavior is still uncertain. Skip it for trivial glue and throwaway spikes.
