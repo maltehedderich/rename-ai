@@ -158,10 +158,9 @@ func (g *fakeNameGenerator) GenerateName(ctx context.Context, content []byte, mi
 	g.inFlight--
 	g.mu.Unlock()
 
-	key := string(content)
-	if err := g.errors[key]; err != nil {
+	if err := g.errors[string(content)]; err != nil {
 		return "", "", err
 	}
-	name := g.names[key]
+	name := g.names[string(content)]
 	return name.filename, name.reasoning, nil
 }
