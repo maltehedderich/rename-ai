@@ -20,6 +20,18 @@ If you are a Go developer or prefer installing via `go`:
 go install github.com/maltehedderich/rename-ai/cmd/rnai@latest
 ```
 
+Go installs `rnai` into `GOBIN`, or `$(go env GOPATH)/bin` when `GOBIN` is unset (usually `~/go/bin`). This directory must be on your shell's `PATH`.
+
+If you get `command not found: rnai` on macOS or Linux, add the install directory to your current shell:
+
+```bash
+rnai_bin="$(go env GOBIN)"
+export PATH="${rnai_bin:-$(go env GOPATH)/bin}:$PATH"
+rnai --help
+```
+
+To make this permanent, add the first two lines to `~/.zshrc` (zsh) or `~/.bashrc` (bash), then open a new terminal.
+
 ## Configuration
 
 Before running the tool, you must configure your Gemini API key.
